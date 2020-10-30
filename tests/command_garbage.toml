@@ -1,0 +1,6 @@
+[providers.mock]
+data = "Where am I"
+
+[hooks.command]
+command = "/not/a/command"
+

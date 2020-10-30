@@ -1,0 +1,15 @@
+---
+- some nonesense
+[providers.aws]
+application = "myApp"
+bad_environment = "dev"
+configuration = "myConf"
+client_id = "23"
+
+[hooks.template]
+file = "mytemplate.tmpl"
+source_type = "yaml"
+#out_file = "myconfig.conf"
+
+[hooks.file]
+file = "raw_output.txt"

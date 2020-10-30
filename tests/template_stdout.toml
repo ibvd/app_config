@@ -1,0 +1,13 @@
+[providers.mock]
+data = """---
+hosts:
+  - name: host1
+    public_key: xyz
+  - name: host2
+    public_key: abc"""
+
+[hooks.template]
+file = "tests/test_template.tmpl"
+source_type = "yaml"
+#out_file = "./tests/rendered.txt"
+

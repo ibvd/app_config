@@ -1,0 +1,7 @@
+[providers.mock]
+data = "Where am I"
+
+[hooks.command]
+command = "cat > ./tests/piped.txt"
+pipe_data = true
+

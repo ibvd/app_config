@@ -1,0 +1,5 @@
+[providers.mock]
+data = "Where am I"
+
+[hooks.file]
+outfile = "./tests/raw_output.txt"
