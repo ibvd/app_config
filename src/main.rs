@@ -2,13 +2,12 @@
 extern crate clap;
 use clap::ArgMatches;
 
-mod providers;
-mod hooks;
 mod cli;
+mod hooks;
+mod providers;
 use cli::build_cli;
 mod config;
-use config::{Config};
-
+use config::Config;
 
 fn main() {
     let matches = build_cli().get_matches();
@@ -21,33 +20,28 @@ fn main() {
     }
 }
 
-
 /// Check upstream provider for updates
 /// If there are updates run all associated hooks, else just end
 fn check_for_updates(matches: &ArgMatches) {
     let file = matches.value_of("FILE").unwrap();
     let config = Config::from_file(file);
 
-    match config.provider.poll() {
+    if let Some(data) = config.provider.poll() {
         // We have data, let's run each of the hooks in order
-        Some(data) => {
-            for hook in config.hooks {
-                match hook.run(&data) {
-                    Err(e) => { 
-                        eprintln!("Error running hook {:?}", e); 
-                        std::process::exit(exitcode::SOFTWARE); 
-                    },
-                    Ok(()) => {},
+        // If there is no data, just exit the program with nothing more to do.
+        for hook in config.hooks {
+            match hook.run(&data) {
+                Err(e) => {
+                    eprintln!("Error running hook {:?}", e);
+                    std::process::exit(exitcode::SOFTWARE);
                 }
+                Ok(()) => {}
             }
-        },
-        // No new data, we're done
-        None => {},
+        }
     }
 }
 
-
-/// Check local cache and print out the latest 
+/// Check local cache and print out the latest
 /// version of the data we have
 fn query_data(matches: &ArgMatches) {
     let file = matches.value_of("FILE").unwrap();
@@ -58,6 +52,6 @@ fn query_data(matches: &ArgMatches) {
         Err(e) => {
             eprintln!("Error fetching data from cache: {:?}", e);
             std::process::exit(exitcode::SOFTWARE);
-        },
+        }
     }
 }

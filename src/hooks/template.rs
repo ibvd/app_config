@@ -1,18 +1,18 @@
+use crate::hooks::{BoxResult, Hook};
 use serde_derive::Deserialize;
-use crate::hooks::{Hook, BoxResult};
 // use crate::config::DataType;
 // use crate::config;
 
+use shellexpand::tilde;
 use std::fs;
 use std::io::prelude::*;
-use shellexpand::tilde;
 
 use handlebars::Handlebars;
 
 // TemplateConf will store the user's input from the configuration file
 // and then let us instantiate a Template struct
 #[derive(Debug, Deserialize)]
-#[serde(rename="template")]
+#[serde(rename = "template")]
 pub struct TemplateConf {
     file: String,
     source_type: DataType,
@@ -29,15 +29,19 @@ impl TemplateConf {
             Err(e) => {
                 eprintln!("Could not open {}: {}", &self.file, e);
                 std::process::exit(exitcode::OSFILE);
-            },
+            }
         };
 
-        Template::new(&file_contents, self.source_type.clone(), self.out_file.clone())
+        Template::new(
+            &file_contents,
+            self.source_type.clone(),
+            self.out_file.clone(),
+        )
     }
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum DataType {
     YAML,
     JSON,
@@ -45,7 +49,7 @@ pub enum DataType {
 }
 
 /// The Template hook will take formatted data (yaml, toml, json) from the provider
-/// and render it using a Handlebars template stored in <tpl>. If <out_file> is 
+/// and render it using a Handlebars template stored in <tpl>. If <out_file> is
 /// ommited the template will be rendered to stdout. Else it will be saved to a file.
 #[derive(Debug)]
 pub struct Template {
@@ -56,14 +60,13 @@ pub struct Template {
 
 impl Template {
     /// Create a new Template struct
-    pub fn new(tpl: &str, source_type: DataType, outfile: Option<String>) -> Template {
-        Template { 
+    pub fn new(tpl: &str, source_type: DataType, out_file: Option<String>) -> Template {
+        Template {
             tpl: tpl.to_string(),
-            source_type: source_type,
-            out_file: outfile,
+            source_type,
+            out_file,
         }
     }
-
 
     /// Render the template
     fn render(&self, data: &str) -> String {
@@ -86,9 +89,8 @@ impl Template {
     }
 }
 
-
 impl Hook for Template {
-    /// Render the data and either print to stdout, 
+    /// Render the data and either print to stdout,
     /// or save the output to a file
     fn run(&self, data: &str) -> BoxResult<()> {
         let rendered_data = &self.render(data);
@@ -100,20 +102,18 @@ impl Hook for Template {
                 let expanded_path = tilde(&file).to_string();
 
                 match fs::File::create(expanded_path) {
-                    Ok(mut file_handle) => 
-                        file_handle.write_all(rendered_data.as_bytes())?,
+                    Ok(mut file_handle) => file_handle.write_all(rendered_data.as_bytes())?,
                     Err(e) => {
                         eprintln!("Could not open {}: {}", file, e);
                         std::process::exit(exitcode::OSFILE);
-                    },
+                    }
                 };
-            },
+            }
             None => println!("{}", rendered_data),
         };
         Ok(())
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -126,7 +126,6 @@ hosts:
     public_key: xyz
   - name: host2
     public_key: abc"
-
     }
 
     fn gen_json_data() -> &'static str {
@@ -175,13 +174,13 @@ PublicKey = {{this.public_key}}
     #[test]
     fn test_yaml_template() {
         let expected = gen_expected();
-        let tpl = Template { 
-            tpl: gen_template().to_string(), 
+        let tpl = Template {
+            tpl: gen_template().to_string(),
             // data: gen_yml_data().to_string(),
             source_type: DataType::YAML,
             out_file: None,
         };
-        let res = tpl.render( gen_yml_data() );
+        let res = tpl.render(gen_yml_data());
 
         assert_eq!(expected, res);
     }
@@ -189,13 +188,13 @@ PublicKey = {{this.public_key}}
     #[test]
     fn test_json_template() {
         let expected = gen_expected();
-        let tpl = Template { 
-            tpl: gen_template().to_string(), 
+        let tpl = Template {
+            tpl: gen_template().to_string(),
             // data: gen_json_data().to_string(),
             source_type: DataType::JSON,
             out_file: None,
         };
-        let res = tpl.render( gen_json_data() );
+        let res = tpl.render(gen_json_data());
 
         assert_eq!(expected, res);
     }
@@ -203,15 +202,14 @@ PublicKey = {{this.public_key}}
     #[test]
     fn test_toml_template() {
         let expected = gen_expected();
-        let tpl = Template { 
-            tpl: gen_template().to_string(), 
+        let tpl = Template {
+            tpl: gen_template().to_string(),
             // data: gen_toml_data().to_string(),
             source_type: DataType::TOML,
             out_file: None,
         };
-        let res = tpl.render( gen_toml_data() );
+        let res = tpl.render(gen_toml_data());
 
         assert_eq!(expected, res);
     }
 }
-

@@ -1,8 +1,8 @@
+use crate::providers::{BoxResult, Provider};
 use serde_derive::Deserialize;
-use crate::providers::{Provider, BoxResult};
 
 #[derive(Debug, Deserialize)]
-#[serde(rename="mock")]
+#[serde(rename = "mock")]
 pub struct MockConf {
     pub data: String,
 }
@@ -14,7 +14,7 @@ impl MockConf {
 }
 
 /// Mock is a dummy provider that just returns whatever data it was given
-/// It is mainly useful for dialing in templates as it lets you quickly 
+/// It is mainly useful for dialing in templates as it lets you quickly
 /// test input data against the desired output format
 #[derive(Debug, PartialEq)]
 pub struct Mock {
@@ -24,7 +24,7 @@ pub struct Mock {
 impl Mock {
     /// Creates new Mock provider
     pub fn new(data: &str) -> Mock {
-        Mock { 
+        Mock {
             data: data.to_string(),
         }
     }
@@ -41,7 +41,6 @@ impl Provider for Mock {
         Ok(self.data.clone())
     }
 }
-
 
 #[cfg(test)]
 mod test {
@@ -61,12 +60,13 @@ mod test {
         let res = mock.query().unwrap();
         assert_eq!(res, String::from("Am I a mock"));
     }
-    
-    fn gen_config () -> String {
+
+    fn gen_config() -> String {
         r#"
         [providers.mock]
         data = "Am I a mock"
-        "#.to_string()
+        "#
+        .to_string()
     }
 
     #[test]

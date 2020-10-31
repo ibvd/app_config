@@ -1,10 +1,8 @@
-
-const VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const NAME:    &'static str = env!("CARGO_PKG_NAME");
-
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const NAME: &str = env!("CARGO_PKG_NAME");
 
 pub fn build_cli() -> clap::App<'static, 'static> {
-    clap_app!( app_config => 
+    clap_app!( app_config =>
         (version: VERSION)
         (name: NAME)
         (about: "app_config: watch AWS appConfig for changes and take action")
@@ -21,4 +19,3 @@ pub fn build_cli() -> clap::App<'static, 'static> {
         )
     )
 }
-

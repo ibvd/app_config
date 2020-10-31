@@ -1,15 +1,15 @@
+use crate::hooks::{BoxResult, Hook};
 use serde_derive::Deserialize;
-use crate::hooks::{Hook, BoxResult};
 use std::io::Write;
 // use crate::config;
 
 // CommandConf will store the user's input from the configuration file
 // and then let us instantiate a File Object
 #[derive(Debug, Deserialize)]
-#[serde(rename="command")]
+#[serde(rename = "command")]
 pub struct CommandConf {
     pub command: String,
-    pub pipe_data: Option<bool>
+    pub pipe_data: Option<bool>,
 }
 
 impl CommandConf {
@@ -23,7 +23,7 @@ impl CommandConf {
 }
 
 /// The Command Hook will fire off an external script whenever new data is received
-/// by the provider. Optionally, if pipe_data is true, it will pipe the data 
+/// by the provider. Optionally, if pipe_data is true, it will pipe the data
 /// received from the provider into the stdin pipe on the script.
 #[derive(Debug, PartialEq)]
 pub struct Command {
@@ -34,35 +34,37 @@ pub struct Command {
 impl Command {
     /// Create a new Command struct
     pub fn new(cmd: &str, pipe_data: bool) -> Command {
-        Command { 
+        Command {
             command: cmd.to_string(),
-            pipe_data: pipe_data,
+            pipe_data,
         }
     }
 }
 
-
 impl Hook for Command {
     /// Execute the command
     fn run(&self, data: &str) -> BoxResult<()> {
-
         match self.pipe_data {
             // No data to pipe in.  Just run the command
             false => {
-                let out = std::process::Command::new("/bin/bash").arg("-c")
-                    .arg(self.command.clone()).output()?;
+                let out = std::process::Command::new("/bin/bash")
+                    .arg("-c")
+                    .arg(self.command.clone())
+                    .output()?;
                 if !out.status.success() {
                     eprintln!("Failed to execute cmd: {}", self.command);
                     std::process::exit(exitcode::SOFTWARE);
                 }
-            },
+            }
             true => {
-            // We have data to pipe in.  Spawn a process, send it data
-            // Then check the return code
-                let mut child = std::process::Command::new("/bin/bash").arg("-c")
+                // We have data to pipe in.  Spawn a process, send it data
+                // Then check the return code
+                let mut child = std::process::Command::new("/bin/bash")
+                    .arg("-c")
                     .arg(self.command.clone())
                     .stdin(std::process::Stdio::piped())
-                    .stdout(std::process::Stdio::piped()).spawn()
+                    .stdout(std::process::Stdio::piped())
+                    .spawn()
                     .expect("Failed to spawn child process");
 
                 let stdin = child.stdin.as_mut().expect("Failed to open stdin");
@@ -74,27 +76,26 @@ impl Hook for Command {
                     eprintln!("Failed to execute cmd: {}", self.command);
                     std::process::exit(exitcode::SOFTWARE);
                 }
-            },
+            }
         };
         Ok(())
     }
 }
 
-
 #[cfg(test)]
-mod tests { 
+mod tests {
     use super::*;
 
     #[test]
     fn test_cmd() {
-        let c = Command::new(&"echo Booyeah", false); 
+        let c = Command::new(&"echo Booyeah", false);
 
         assert_eq!(c.run(&"").unwrap(), ());
     }
 
     #[test]
     fn test_piped_cmd() {
-        let c = Command::new(&"echo", true); 
+        let c = Command::new(&"echo", true);
 
         let res = c.run(&"Booyeah").unwrap();
         let expected = ();
@@ -107,7 +108,8 @@ mod tests {
         [hooks.command]
          command = "cat > booyeah.txt"
          pipe_data = true
-        "#.to_string()
+        "#
+        .to_string()
     }
 
     #[test]
@@ -121,5 +123,3 @@ mod tests {
         assert_eq!(res, exp);
     }
 }
-
-
