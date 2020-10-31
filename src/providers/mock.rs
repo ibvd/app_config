@@ -1,5 +1,6 @@
-use crate::providers::{BoxResult, Provider};
+use crate::providers::Provider;
 use serde_derive::Deserialize;
+use eyre::Result;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename = "mock")]
@@ -37,7 +38,7 @@ impl Provider for Mock {
     }
 
     /// Just return the data contained in the Mock struct
-    fn query(&self) -> BoxResult<String> {
+    fn query(&self) -> Result<String> {
         Ok(self.data.clone())
     }
 }

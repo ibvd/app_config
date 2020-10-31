@@ -2,7 +2,7 @@ use shellexpand::tilde;
 use std::fs;
 
 use crate::hooks::{CommandConf, FileConf, Hook, RawConf, TemplateConf};
-use crate::providers::{AWSConf, MockConf, Provider};
+use crate::providers::{AppCfgConf, MockConf, Provider};
 
 type TResult<T> = Result<T, toml::de::Error>;
 
@@ -46,7 +46,7 @@ macro_rules! parse_providers {
         { $(
         if ! true { }
         $(
-        // AWS
+        // AppCfg
         else if $provider_type.as_str() == $section {
             let conf: TResult<$conf> = $maps["providers"][$section]
                                                     .clone().try_into();
@@ -139,13 +139,9 @@ impl Config {
         // the provider struct in <provider>. It will panic if no provider is found
         // or if there is a parsing error in the provider section.
         parse_providers!(
-            maps,
-            provider_type,
-            provider,
-            "mock",
-            MockConf,
-            "aws",
-            AWSConf
+            maps, provider_type, provider,
+            "mock", MockConf,
+            "appconfig", AppCfgConf
         );
 
         provider
@@ -165,16 +161,11 @@ impl Config {
         // This macro will instantiate a struct for each hook found in
         // maps["hooks"], and push that hook into the 'hooks' vector
         parse_hooks!(
-            maps,
-            hooks,
-            "template",
-            TemplateConf,
-            "file",
-            FileConf,
-            "raw",
-            RawConf,
-            "command",
-            CommandConf
+            maps, hooks,
+            "template", TemplateConf,
+            "file", FileConf,
+            "raw", RawConf,
+            "command", CommandConf
         );
 
         hooks
@@ -191,10 +182,10 @@ mod test {
     use super::*;
     use crate::hooks::template::DataType;
     use crate::hooks::{Command, File, Hook, Template};
-    use crate::providers::AWS;
+    use crate::providers::AppCfg;
 
     fn gen_full_config() -> String {
-        "[providers.aws]
+        "[providers.appconfig]
 application = \"myApp\"
 environment = \"dev\"
 configuration = \"myConf\"
@@ -215,7 +206,7 @@ pipe_data = true
     }
 
     fn gen_min_config() -> String {
-        "[providers.aws]
+        "[providers.appconfig]
 application = \"myApp\"
 environment = \"dev\"
 configuration = \"myConf\"
@@ -223,8 +214,8 @@ client_id = \"42\""
             .to_string()
     }
 
-    fn gen_aws_struct() -> AWS {
-        AWS::new(&"myApp", &"dev", &"myConf", &"42", &None)
+    fn gen_appconfig_struct() -> AppCfg {
+        AppCfg::new(&"myApp", &"dev", &"myConf", &"42", &None)
     }
 
     fn gen_template_struct() -> Template {
@@ -258,7 +249,7 @@ PublicKey = {{this.public_key}}
     fn test_get_provider() {
         let config_str = gen_full_config();
         let tml: toml::Value = toml::from_str(&config_str).unwrap();
-        let expected_str = format!("{:?}", gen_aws_struct());
+        let expected_str = format!("{:?}", gen_appconfig_struct());
         let provider_str = format!("{:?}", Config::get_provider(&tml));
         assert_eq!(expected_str, provider_str);
     }

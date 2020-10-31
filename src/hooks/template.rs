@@ -1,7 +1,8 @@
-use crate::hooks::{BoxResult, Hook};
+use crate::hooks::Hook;
 use serde_derive::Deserialize;
 // use crate::config::DataType;
 // use crate::config;
+use eyre::Result;
 
 use shellexpand::tilde;
 use std::fs;
@@ -92,7 +93,7 @@ impl Template {
 impl Hook for Template {
     /// Render the data and either print to stdout,
     /// or save the output to a file
-    fn run(&self, data: &str) -> BoxResult<()> {
+    fn run(&self, data: &str) -> Result<()> {
         let rendered_data = &self.render(data);
 
         // If the user configured 'out_file', write the template there

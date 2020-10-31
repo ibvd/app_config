@@ -1,5 +1,6 @@
-use crate::hooks::{BoxResult, Hook};
+use crate::hooks::Hook;
 use serde_derive::Deserialize;
+use eyre::Result;
 
 // RawConf will let the config file parser instantiate a Raw Hook struct
 // Overkill for this simpel module, but some other hooks are more complex and
@@ -21,7 +22,7 @@ pub struct Raw {}
 
 impl Hook for Raw {
     /// Write the raw data to stdout
-    fn run(&self, data: &str) -> BoxResult<()> {
+    fn run(&self, data: &str) -> Result<()> {
         println!("{}", data);
         Ok(())
     }

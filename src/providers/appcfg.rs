@@ -2,15 +2,17 @@ use rusoto_appconfig::{AppConfig, GetConfigurationRequest};
 use rusoto_core::Region;
 use serde_derive::Deserialize;
 
-use crate::providers::{BoxResult, Provider};
+// use crate::providers::{BoxResult, Provider};
+use crate::providers::Provider;
+use eyre::Result;
 
 use rusqlite::{params, Connection};
 
 /// AWSConf is used to parse a config file via serde and instantiate the
 /// AWS Provider struct
 #[derive(Debug, Deserialize)]
-#[serde(rename = "AWS")]
-pub struct AWSConf {
+#[serde(rename = "AppCfg")]
+pub struct AppCfgConf {
     pub application: String,
     pub environment: String,
     pub configuration: String,
@@ -18,9 +20,9 @@ pub struct AWSConf {
     pub state_file: Option<String>,
 }
 
-impl AWSConf {
-    pub fn convert(&self) -> AWS {
-        AWS::new(
+impl AppCfgConf {
+    pub fn convert(&self) -> AppCfg {
+        AppCfg::new(
             &self.application,
             &self.environment,
             &self.configuration,
@@ -34,7 +36,7 @@ impl AWSConf {
 /// and cache any results into a local sqlite db.  The caching helps avoid charges
 /// for polls when there are no new updates.
 #[derive(Debug)]
-pub struct AWS {
+pub struct AppCfg {
     application: String,
     environment: String,
     configuration: String,
@@ -43,8 +45,8 @@ pub struct AWS {
     db_conn: Connection,
 }
 
-impl AWS {
-    /// Creates new AWS client
+impl AppCfg {
+    /// Creates new AWS AppConfig client
     /// The client will use the default user or system AWS credentials
     pub fn new(
         application: &str,
@@ -52,7 +54,7 @@ impl AWS {
         configuration: &str,
         client_id: &str,
         state_file: &Option<String>,
-    ) -> AWS {
+    ) -> AppCfg {
         // Open sqlitedb using in-memory if no file specified
         let conn = match state_file {
             &None => match Connection::open_in_memory() {
@@ -72,7 +74,7 @@ impl AWS {
         };
 
         // Setup the tables if they do not already exist
-        match AWS::create_cache(&conn) {
+        match AppCfg::create_cache(&conn) {
             Ok(()) => {}
             Err(e) => {
                 eprintln!("Error, unable to create cache: {:?}", e);
@@ -80,7 +82,7 @@ impl AWS {
             }
         };
 
-        let version = match AWS::pull_latest_version(&conn) {
+        let version = match AppCfg::pull_latest_version(&conn) {
             Ok(ver) => ver as usize,
             Err(e) => {
                 eprintln!("Error, unable to query cache: {:?}", e);
@@ -89,7 +91,7 @@ impl AWS {
         };
 
         // Create and return the Struct
-        AWS {
+        AppCfg {
             current_version: version,
             application: application.to_string(),
             environment: environment.to_string(),
@@ -145,7 +147,7 @@ impl AWS {
     }
 }
 
-impl Provider for AWS {
+impl Provider for AppCfg {
     /// Polls the AWS AppConfig service and checks for new data
     /// If we are up to date and already have the latest data
     /// returns None, else, retuns the new data
@@ -192,7 +194,8 @@ impl Provider for AWS {
     /// Query
     /// Returns the latest version of the config from our local cache
     /// Does not contact the upstream source.
-    fn query(&self) -> BoxResult<String> {
+    // fn query(&self) -> BoxResult<String> {
+    fn query(&self) -> Result<String> {
         let res: String =
             self.db_conn
                 .query_row("SELECT data FROM appConfig WHERE id=0", params![], |row| {
@@ -227,46 +230,46 @@ async fn get_config(request: GetConfigurationRequest) -> rusoto_appconfig::Confi
 mod test {
     use super::*;
 
-    fn gen_aws_struct() -> AWS {
-        AWS::new(&"myApp", &"dev", &"myConf", &"42", &None)
+    fn gen_appconfig_struct() -> AppCfg {
+        AppCfg::new(&"myApp", &"dev", &"myConf", &"42", &None)
     }
 
     #[test]
     fn test_create_db() {
-        let aws = gen_aws_struct();
+        let appconfig = gen_appconfig_struct();
 
-        let res = AWS::create_cache(&aws.db_conn);
+        let res = AppCfg::create_cache(&appconfig.db_conn);
         assert_eq!(res, Ok(()));
     }
 
     #[test]
     fn test_pull_latest_version() {
-        let aws = gen_aws_struct();
+        let appconfig = gen_appconfig_struct();
 
-        let res = AWS::pull_latest_version(&aws.db_conn);
+        let res = AppCfg::pull_latest_version(&appconfig.db_conn);
         assert_eq!(res, Ok(0));
     }
 
     #[test]
     fn test_update_cache() {
-        let aws = gen_aws_struct();
+        let appconfig = gen_appconfig_struct();
 
-        let res = AWS::pull_latest_version(&aws.db_conn);
+        let res = AppCfg::pull_latest_version(&appconfig.db_conn);
         assert_eq!(res, Ok(0));
 
-        let res = aws.update_cache(12, &"something");
+        let res = appconfig.update_cache(12, &"something");
         assert_eq!(res, Ok(()));
 
-        let res = AWS::pull_latest_version(&aws.db_conn);
+        let res = AppCfg::pull_latest_version(&appconfig.db_conn);
         assert_eq!(res, Ok(12));
 
-        let res = aws.query().unwrap();
+        let res = appconfig.query().unwrap();
         assert_eq!(res, "something".to_string());
     }
 
     fn gen_config() -> String {
         r#"
-        [providers.aws]
+        [providers.appconfig]
         application = "myApp"
         environment = "dev"
         configuration = "myConf"
@@ -277,11 +280,11 @@ mod test {
 
     #[test]
     fn parse_config() {
-        let exp = AWS::new(&"myApp", &"dev", &"myConf", &"42", &None);
+        let exp = AppCfg::new(&"myApp", &"dev", &"myConf", &"42", &None);
         let expected = format!("{:?}", exp);
 
         let maps: toml::Value = toml::from_str(&gen_config()).unwrap();
-        let conf: AWSConf = maps["providers"]["aws"].clone().try_into().unwrap();
+        let conf: AppCfgConf = maps["providers"]["appconfig"].clone().try_into().unwrap();
         let res = conf.convert();
         let result = format!("{:?}", res);
 

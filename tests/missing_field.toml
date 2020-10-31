@@ -1,4 +1,4 @@
-[providers.aws]
+[providers.appconfig]
 application = "myApp"
 bad_environment = "dev"
 configuration = "myConf"

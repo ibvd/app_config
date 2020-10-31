@@ -1,6 +1,7 @@
-use crate::hooks::{BoxResult, Hook};
+use crate::hooks::Hook;
 use serde_derive::Deserialize;
 // use crate::config;
+use eyre::Result;
 
 use shellexpand::tilde;
 use std::fs;
@@ -44,7 +45,7 @@ impl File {
 
 impl Hook for File {
     /// Write the raw data to the output file
-    fn run(&self, data: &str) -> BoxResult<()> {
+    fn run(&self, data: &str) -> Result<()> {
         // If the user configured 'outfile', write the template there
         // Else print the rendered templete to stdout
         match fs::File::create(&self.outfile) {

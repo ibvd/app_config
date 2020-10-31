@@ -1,6 +1,7 @@
-use crate::hooks::{BoxResult, Hook};
+use crate::hooks::Hook;
 use serde_derive::Deserialize;
 use std::io::Write;
+use eyre::Result;
 // use crate::config;
 
 // CommandConf will store the user's input from the configuration file
@@ -43,7 +44,7 @@ impl Command {
 
 impl Hook for Command {
     /// Execute the command
-    fn run(&self, data: &str) -> BoxResult<()> {
+    fn run(&self, data: &str) -> Result<()> {
         match self.pipe_data {
             // No data to pipe in.  Just run the command
             false => {
