@@ -2,7 +2,7 @@ use shellexpand::tilde;
 use std::fs;
 
 use crate::hooks::{CommandConf, FileConf, Hook, RawConf, TemplateConf};
-use crate::providers::{AppCfgConf, MockConf, Provider};
+use crate::providers::{AppCfgConf, MockConf, ParamStoreConf, Provider};
 
 type TResult<T> = Result<T, toml::de::Error>;
 
@@ -141,7 +141,8 @@ impl Config {
         parse_providers!(
             maps, provider_type, provider,
             "mock", MockConf,
-            "appconfig", AppCfgConf
+            "appconfig", AppCfgConf,
+            "param_store", ParamStoreConf
         );
 
         provider
@@ -150,6 +151,9 @@ impl Config {
     /// Parse the config file looking for hooks
     /// The order in the vec will be the same as specified in the config file
     /// Will panic on any errors.
+    // For odering to work, the toml dependency must feature preserve order
+    // e.g. # Cargo.toml
+    // e.g. toml = { version = "0.5.7", features=["preserve_order"] }
     fn get_hooks(maps: &toml::Value) -> Vec<Box<dyn Hook>> {
         let mut hooks: Vec<Box<dyn Hook>> = Vec::new();
 

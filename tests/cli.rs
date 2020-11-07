@@ -2,6 +2,23 @@ use assert_cmd::prelude::*; // Add methods on commands
 use predicates::prelude::*; // Used for writing assertions
 use std::process::Command; // Run programs
 
+// // // // // // Utility Functions // // // // // // 
+
+fn rm_file(path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let error_msg = format!("failed to remove {}", path);
+
+    let cmd = Command::new("rm")
+        .arg("-f")
+        .arg(path)
+        .output()
+        .expect(&error_msg);
+    cmd.assert().success();
+    Ok(())
+}
+
+
+// // // // // // // // CLI // // // // // // // //
+
 #[test]
 fn file_doesnt_exist() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("app_config")?;
@@ -13,6 +30,9 @@ fn file_doesnt_exist() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
+// // // // // // Config File Parsing // // // // // // 
 
 #[test]
 fn invalid_config_file() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,17 +60,37 @@ fn missing_field() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+
+// // // // // // Mock Provider // // // // // // 
+
 #[test]
-fn query() -> Result<(), Box<dyn std::error::Error>> {
+fn test_mock_check() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("app_config")?;
 
-    cmd.arg("query").arg("-f").arg("./tests/query.toml");
+    cmd.arg("check").arg("-f").arg("./tests/mock.toml");
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Where am I"));
 
     Ok(())
 }
+
+#[test]
+fn test_mock_query() -> Result<(), Box<dyn std::error::Error>> {
+    let mut cmd = Command::cargo_bin("app_config")?;
+
+    cmd.arg("query").arg("-f").arg("./tests/mock.toml");
+    cmd.assert()
+        .success()
+        .stdout(predicate::str::contains("Where am I"));
+
+    Ok(())
+}
+
+// // // // // // Parameter Store // // // // // // 
+
+
+// // // // // // // File Hook // // // // // // //
 
 #[test]
 fn test_file_hook() -> Result<(), Box<dyn std::error::Error>> {
@@ -81,6 +121,9 @@ fn test_file_hook() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+
+// // // // // // Template Hook // // // // // // 
 
 #[test]
 fn test_template_hook() -> Result<(), Box<dyn std::error::Error>> {
@@ -173,6 +216,9 @@ hosts:
     Ok(())
 }
 
+
+// // // // // // Command Hook // // // // // // 
+
 #[test]
 fn test_garbage_cmd() -> Result<(), Box<dyn std::error::Error>> {
     let mut cmd = Command::cargo_bin("app_config")?;
@@ -211,17 +257,5 @@ fn test_piped_cmd() -> Result<(), Box<dyn std::error::Error>> {
     // Ensure outfile is removed post our test
     rm_file(outfile)?;
 
-    Ok(())
-}
-
-fn rm_file(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let error_msg = format!("failed to remove {}", path);
-
-    let cmd = Command::new("rm")
-        .arg("-f")
-        .arg(path)
-        .output()
-        .expect(&error_msg);
-    cmd.assert().success();
     Ok(())
 }

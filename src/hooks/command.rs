@@ -2,7 +2,9 @@ use crate::hooks::Hook;
 use serde_derive::Deserialize;
 use std::io::Write;
 use eyre::Result;
-// use crate::config;
+
+
+// // // // // // // // // Handle Configuraion // // // // // // // //
 
 // CommandConf will store the user's input from the configuration file
 // and then let us instantiate a File Object
@@ -22,6 +24,9 @@ impl CommandConf {
         Command::new(&self.command, p)
     }
 }
+
+
+// // // // // // // // // // // Hook  // // // // // // // // // // //
 
 /// The Command Hook will fire off an external script whenever new data is received
 /// by the provider. Optionally, if pipe_data is true, it will pipe the data
@@ -83,6 +88,8 @@ impl Hook for Command {
     }
 }
 
+
+// // // // // // // // // // // Tests // // // // // // // // // // //
 #[cfg(test)]
 mod tests {
     use super::*;

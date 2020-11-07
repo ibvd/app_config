@@ -109,7 +109,7 @@ impl AppCfg {
             "CREATE TABLE IF NOT EXISTS appConfig (
                 id      INTEGER PRIMARY KEY,
                 version INTEGER NOT NULL,
-                data    varchar(15) NOT NULL
+                data    TEXT NOT NULL
                 )",
             params![],
         )?;
@@ -152,7 +152,7 @@ impl Provider for AppCfg {
     /// If we are up to date and already have the latest data
     /// returns None, else, retuns the new data
     /// Panics if we can not reach AWS, or check in with the service
-    fn poll(&self) -> Option<String> {
+    fn poll(&self) -> Result<Option<String>> {
         let request = GetConfigurationRequest {
             application: self.application.clone(),
             environment: self.environment.clone(),
@@ -174,7 +174,7 @@ impl Provider for AppCfg {
 
         if self.current_version == version {
             // We are up to date.  Nothing more to do
-            return None;
+            return Ok(None);
         }
 
         // We have a new update.  Extract the data,
@@ -188,7 +188,7 @@ impl Provider for AppCfg {
             Err(e) => eprintln!("Error saving to local cache: {:#?}", e),
         }
 
-        Some(data)
+        Ok(Some(data))
     }
 
     /// Query

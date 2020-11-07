@@ -3,6 +3,7 @@ name = "app_config"
 version = "0.1.0"
 authors = ["Will <gh@ibvd.net>"]
 edition = "2018"
+autotests = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -34,3 +35,11 @@ panic = 'abort'
 [dev-dependencies]
 assert_cmd = "1.0.1"
 predicates = "1.0.5"
+
+[[test]]
+name = "integration"
+path = "tests/cli.rs"
+
+[[test]]
+name = "ps"
+path = "tests/param_store.rs"

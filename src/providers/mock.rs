@@ -33,8 +33,8 @@ impl Mock {
 
 impl Provider for Mock {
     /// Just return the data contained in the Mock struct
-    fn poll(&self) -> Option<String> {
-        Some(self.data.clone())
+    fn poll(&self) -> Result<Option<String>> {
+        Ok(Some(self.data.clone()))
     }
 
     /// Just return the data contained in the Mock struct
@@ -55,7 +55,7 @@ mod test {
     fn test_poll() {
         let mock = gen_mock_struct();
 
-        let res = mock.poll().unwrap();
+        let res = mock.poll().unwrap().unwrap();
         assert_eq!(res, String::from("Am I a mock"));
 
         let res = mock.query().unwrap();

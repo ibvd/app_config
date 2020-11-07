@@ -1,10 +1,7 @@
 ---
 - some nonesense
-[providers.appconfig]
-application = "myApp"
-bad_environment = "dev"
-configuration = "myConf"
-client_id = "23"
+[providers.mock]
+data = "Who am I"
 
 [hooks.template]
 file = "mytemplate.tmpl"

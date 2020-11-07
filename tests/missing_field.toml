@@ -1,8 +1,4 @@
-[providers.appconfig]
-application = "myApp"
-bad_environment = "dev"
-configuration = "myConf"
-client_id = "23"
+[providers.mock]
 
 [hooks.template]
 file = "mytemplate.tmpl"
