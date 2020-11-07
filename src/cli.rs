@@ -14,9 +14,6 @@ pub fn build_cli() -> clap::App<'static, 'static> {
             (about: "Print last data received")
             (@arg FILE: -f --file +takes_value +required)
         )
-        (@subcommand params =>
-            (about: "Get Parameters")
-        )
         (@subcommand bash =>
             (about: "Generate a bash autocompletion script")
         )
