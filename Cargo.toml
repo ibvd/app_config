@@ -37,7 +37,7 @@ assert_cmd = "1.0.1"
 predicates = "1.0.5"
 
 [[test]]
-name = "integration"
+name = "cli"
 path = "tests/cli.rs"
 
 [[test]]
