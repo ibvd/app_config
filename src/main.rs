@@ -3,7 +3,6 @@ extern crate clap;
 use clap::ArgMatches;
 
 use simple_eyre::eyre::{WrapErr, Report};
-// use eyre::eyre;
 
 mod cli;
 mod hooks;
@@ -21,6 +20,7 @@ fn main() -> Result<(), Report> {
     Ok(())
 }
 
+
 fn run() -> eyre::Result<()> {
     let matches = build_cli().get_matches();
 
@@ -34,6 +34,7 @@ fn run() -> eyre::Result<()> {
 
     res
 }
+
 
 /// Check upstream provider for updates
 /// If there are updates run all associated hooks, else just end
@@ -50,6 +51,7 @@ fn check_for_updates(matches: &ArgMatches) -> eyre::Result<()> {
     }
     Ok(())
 }
+
 
 /// Check local cache and print out the latest
 /// version of the data we have
