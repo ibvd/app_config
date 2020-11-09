@@ -1,14 +1,14 @@
 use crate::hooks::Hook;
 use serde_derive::Deserialize;
-// use crate::config::DataType;
-// use crate::config;
 use eyre::Result;
 
 use shellexpand::tilde;
 use std::fs;
 use std::io::prelude::*;
 
-use handlebars::Handlebars;
+use handlebars::{Handlebars, RenderContext, Helper, Context, JsonRender, 
+                 HelperResult, Output };
+
 
 // TemplateConf will store the user's input from the configuration file
 // and then let us instantiate a Template struct
@@ -40,6 +40,7 @@ impl TemplateConf {
         )
     }
 }
+
 
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "lowercase")]
@@ -74,6 +75,8 @@ impl Template {
         let transformed_data = Template::transform(&self.source_type, data);
 
         let mut hb = Handlebars::new();
+        hb.register_helper("simple-helper", Box::new(another_simple_helper));
+
         assert!(hb.register_template_string("tpl", self.tpl.clone()).is_ok());
 
         hb.render("tpl", &transformed_data).unwrap()
@@ -115,6 +118,20 @@ impl Hook for Template {
         Ok(())
     }
 }
+
+// implement via bare function
+fn another_simple_helper (
+    h: &Helper, _: &Handlebars, _: &Context, _rc: &mut RenderContext, 
+                                    out: &mut dyn Output) -> HelperResult {
+
+    let param = h.param(0).unwrap();
+
+    out.write("2nd helper: ")?;
+    out.write(param.value().render().as_ref())?;
+    Ok(())
+}
+
+
 
 #[cfg(test)]
 mod tests {
