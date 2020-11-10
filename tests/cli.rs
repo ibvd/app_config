@@ -179,7 +179,6 @@ PublicKey = xyz
 EndPoint = host2
 PublicKey = abc
 
-
 ",
     ));
 
@@ -202,7 +201,6 @@ PublicKey = xyz
 [Peer]
 EndPoint = host2
 PublicKey = abc
-
 
 ---
 hosts:

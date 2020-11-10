@@ -65,4 +65,18 @@ fn test_ps_query() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[test]
+fn test_template_helper() -> Result<(), Box<dyn std::error::Error>> {
+    // Run app_config with file hook
+    let mut cmd = Command::cargo_bin("app_config")?;
+    cmd.arg("check")
+        .arg("-f")
+        .arg("./tests/template_helper.toml");
+    cmd.assert().success().stdout(predicate::str::similar(
+        "Hello: World\n",
+    ));
+
+    Ok(())
+}
+
 

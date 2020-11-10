@@ -3,7 +3,7 @@ use serde_derive::Deserialize;
 use eyre::{eyre, Result};
 use rusqlite::{params, Connection};
 
-use rusoto_ssm::{Ssm, SsmClient, GetParametersRequest, GetParametersResult};
+use rusoto_ssm::{Ssm, SsmClient, GetParametersRequest};
 use rusoto_core::Region;
 
 
@@ -115,23 +115,8 @@ impl ParamStore {
 impl Provider for ParamStore {
     /// Just return the data contained in the Mock struct
     fn poll(&self) -> Result<Option<String>> {
-        let request = GetParametersRequest {
-            names: vec![self.key.clone(),],
-            with_decryption: Some(true),
-        };
 
-        let response = get_params(request)?;
-
-        let value = match response.parameters {
-            None => return Err(eyre!("AWS Param Store returned no data")),
-            Some(mut res) => match res.pop() {
-                None => return Err(eyre!("AWS Param Store: parameter not found")),
-                Some(param) => match param.value {
-                    None => return Err(eyre!("AWS Param Store value empty")),
-                    Some(value) => value,
-                }
-            }
-        };
+        let value = get_params(&self.key)?;
 
         // Check for new data
         let old_value = ParamStore::pull_latest_data(&self.db_conn)?;
@@ -156,19 +141,36 @@ impl Provider for ParamStore {
 /// get_params()
 /// Make the call to SSM ParamStore and wait for the reply
 #[tokio::main]
-async fn get_params(request: GetParametersRequest) 
-                                        -> eyre::Result<GetParametersResult> {
+pub async fn get_params(key: &str) -> eyre::Result<String> {
+
+    let request = GetParametersRequest {
+        // names: vec![self.key.clone(),],
+        names: vec![key.to_string(),],
+        with_decryption: Some(true),
+    };
+
     let client = SsmClient::new(Region::default());
 
-    let result = client.get_parameters(request).await;
-
-    match result {
-        Ok(res) => Ok(res),
+    let result = match client.get_parameters(request).await {
+        Ok(res) => res,
         Err(e) => {
             eprintln!("Error when fetching parameter: {:?}", e);
             std::process::exit(exitcode::UNAVAILABLE);
         }
-    }
+    };
+
+    let value: String = match result.parameters {
+        None => return Err(eyre!("AWS Param Store returned no data")),
+        Some(mut res) => match res.pop() {
+            None => return Err(eyre!("AWS Param Store: parameter not found")),
+            Some(param) => match param.value {
+                None => return Err(eyre!("AWS Param Store value empty")),
+                Some(value) => value,
+            }
+        }
+    };
+
+    Ok(value)
 }
 
 

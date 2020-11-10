@@ -8,7 +8,10 @@ use std::io::prelude::*;
 
 use handlebars::{Handlebars, RenderContext, Helper, Context, JsonRender, 
                  HelperResult, Output };
+use crate::providers::param_store::get_params;
 
+
+// // // // // // // // // Handle Configuraion // // // // // // // //
 
 // TemplateConf will store the user's input from the configuration file
 // and then let us instantiate a Template struct
@@ -50,6 +53,9 @@ pub enum DataType {
     TOML,
 }
 
+
+// // // // // // // // // // // Hook // // // // // // // // // // //
+
 /// The Template hook will take formatted data (yaml, toml, json) from the provider
 /// and render it using a Handlebars template stored in <tpl>. If <out_file> is
 /// ommited the template will be rendered to stdout. Else it will be saved to a file.
@@ -75,7 +81,7 @@ impl Template {
         let transformed_data = Template::transform(&self.source_type, data);
 
         let mut hb = Handlebars::new();
-        hb.register_helper("simple-helper", Box::new(another_simple_helper));
+        hb.register_helper("key", Box::new(key_helper));
 
         assert!(hb.register_template_string("tpl", self.tpl.clone()).is_ok());
 
@@ -106,32 +112,42 @@ impl Hook for Template {
                 let expanded_path = tilde(&file).to_string();
 
                 match fs::File::create(expanded_path) {
-                    Ok(mut file_handle) => file_handle.write_all(rendered_data.as_bytes())?,
+                    Ok(mut file_handle) => 
+                        file_handle.write_all(rendered_data.as_bytes())?,
                     Err(e) => {
                         eprintln!("Could not open {}: {}", file, e);
                         std::process::exit(exitcode::OSFILE);
                     }
                 };
             }
-            None => println!("{}", rendered_data),
+            None => print!("{}", rendered_data),
         };
         Ok(())
     }
 }
 
-// implement via bare function
-fn another_simple_helper (
+
+/// Handlebars helper function that will accept an AWS Parameter Store Key and
+/// Return the result.   Assume in AWS Paramstore there is a key called "Hello"
+/// with a value "World".  In the template we can write 
+/// `Greetings: {{key "Hello"}}` and when rendered we see: `Greetings: World`
+fn key_helper (
     h: &Helper, _: &Handlebars, _: &Context, _rc: &mut RenderContext, 
                                     out: &mut dyn Output) -> HelperResult {
 
-    let param = h.param(0).unwrap();
+    let ssm_key: String = h.param(0).unwrap().value().render();
+    let value = match get_params(&ssm_key) {
+        Ok(value) => value,
+        Err(e) => return Err(handlebars::RenderError::new(format!("{:#?}", e))),
+    };
 
-    out.write("2nd helper: ")?;
-    out.write(param.value().render().as_ref())?;
+    out.write(&value)?;
     Ok(())
+
 }
+    
 
-
+// // // // // // // // // // // Tests // // // // // // // // // // //
 
 #[cfg(test)]
 mod tests {
